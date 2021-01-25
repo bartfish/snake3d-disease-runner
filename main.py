@@ -5,61 +5,76 @@ class Game(Ursina):
 
     def __init__(self):
         super().__init__()
-        window.color = color.black
+        window.color = color.light_gray
+
         Light(type='ambient', color=(0.5, 0.5, 0.5, 1))
         Light(type='directional', color=(0.5, 0.5, 0.5, 1), direction=(1, 1, 1))
         
         self.MAP_SIZE = 30
-        self.new_game()
+        self.current_lvl = 1
+        self.health_value = 1
+
+        health_info_text = f"Health: {self.health_value}"
+        self.text1 = Text(origin=(-0.5,9), text=health_info_text, scale=0.05)
+
+        lvl_info_tet = f"Current level: {self.current_lvl}"
+        self.text2 = Text(origin=(-0.5,11), text=lvl_info_tet, scale=0.05)
+    
+        scene.clear()
+        
+        Entity(model='plane', scale=self.MAP_SIZE, position=(self.MAP_SIZE // 2, self.MAP_SIZE // 2, 0))
+        Entity(model=Grid(self.MAP_SIZE, self.MAP_SIZE), scale=self.MAP_SIZE,
+               position=(self.MAP_SIZE // 2, self.MAP_SIZE // 2, -0.01), color=color.white)
+
+        self.health = HealthIncrement(self.MAP_SIZE, model='cube', color=color.blue)
+        self.snake = Snake(self.MAP_SIZE)
+        self.initialize_diseases()
+
+        self.health_value = 100
+        self.current_lvl = 1
+        self.update_info_text()
 
         camera.position = (self.MAP_SIZE // 2, -35, -20)
         camera.rotation_x = -65
-
-    def create_map(self, MAP_SIZE):
-        Entity(model='plane', scale=MAP_SIZE, position=(MAP_SIZE // 2, MAP_SIZE // 2, 0), color=color.dark_gray)
-        Entity(model=Grid(MAP_SIZE, MAP_SIZE), scale=MAP_SIZE,
-               position=(MAP_SIZE // 2, MAP_SIZE // 2, -0.01), color=color.white)
 
     def initialize_diseases(self):
         self.diseases = []
         add_3_with_each_lvl = 3
         for n in range(add_3_with_each_lvl):
             self.diseases.append(Diseases(self.MAP_SIZE, model='cube', color=color.red))
+       
+    def update_info_text(self):
 
-    def new_game(self):
-        scene.clear()
-        self.create_map(self.MAP_SIZE)
-        self.health = HealthIncrement(self.MAP_SIZE, model='cube', color=color.blue)
-        self.snake = Snake(self.MAP_SIZE)
-        self.initialize_diseases()
+        if self.text1:
+            destroy(self.text1)
 
-        descr = 'Health: '
-        Text.default_resolution = 800 * Text.size
-        test = Text(origin=(.5,.5), text=descr)
+        health_info_text = f"Health: {self.health_value}"
+        self.text1 = Text(origin=(-0.5,9), text=health_info_text, scale=0.05)
 
-        text = Text(text=descr, wordwrap=10, origin=(-.5,.5), y=.25, background=True)
-        Entity(model='circle', scale=.0005, color=color.white, y=text.y, z=-1)
-        
-    def check_apple_eaten(self):
+        if self.text2:
+            destroy(self.text2)
+
+        lvl_info_tet = f"Current level: {self.current_lvl}"
+        self.text2 = Text(origin=(-0.5,11), text=lvl_info_tet, scale=0.05)
+
+    def verify_health_found(self):
         if self.snake.snake_elements_positions[-1] == self.health.position:
+            self.current_lvl += 1
+            self.health_value = self.health_value + randrange(self.current_lvl, 3 * self.current_lvl)
             self.snake.improve_snake()
             self.health.new_position()
             self.initialize_diseases()
+            self.update_info_text()
 
-    def check_game_over(self):
+    def is_game_over(self):
         snake = self.snake.snake_elements_positions
-        if 0 < snake[-1][0] < self.MAP_SIZE and 0 < snake[-1][1] < self.MAP_SIZE and len(snake) == len(set(snake)):
-                return
-
-        print_on_screen('GAME OVER', position=(-0.7, 0.1), scale=10, duration=1)
-        self.snake.direction = Vec3(0, 0, 0)
-
-        self.snake.permissions = dict.fromkeys(self.snake.permissions, 0)
-        invoke(self.new_game, delay=1)
+        if 0 < snake[-1][0] < self.MAP_SIZE and 0 < snake[-1][1] < self.MAP_SIZE:
+            return
+        exit()
 
     def update(self):
-        self.check_apple_eaten()
-        self.check_game_over()
+        self.verify_health_found()
+        self.is_game_over()
         self.snake.run()
 
 if __name__ == '__main__':

@@ -70,5 +70,4 @@ class Snake:
             if held_keys[key] and self.permissions[key]:
                 self.direction = self.directions[key]
                 self.permissions = dict.fromkeys(self.permissions, 1)
-                # self.permissions[self.taboo_movement[key]] = 0
                 break
