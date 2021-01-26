@@ -146,12 +146,12 @@ class Game(Ursina):
     def is_game_over(self):
         snake = self.snake.snake_elements_positions
         if 0 < snake[0][0] and snake[0][0] < self.MAP_SIZE and 0 < snake[0][1] and snake[0][1] < self.MAP_SIZE:
-            return
-        
-        self.show_finish_game_info()
-        exit()
+            return False
+        else:
+            return True
 
-
+        return False
+    
     def update(self):
 
         # detecting and handling disease
@@ -161,15 +161,10 @@ class Game(Ursina):
                 self.health_value -= snake_sickness_points      
                 self.update_info_text()   
                 break
-
+            
+        # gathering health
         was_health_found = calculate_points_distance(self.snake.snake_elements_positions[-1], self.health.position)
-        print(was_disease_caught)
         if was_health_found <= 1:
-            # self.health_value -= snake_sickness_points      
-            # self.update_info_text()   
-
-        # # gathering health
-        # if self.snake.snake_elements_positions[-1] == self.health.position:
             self.current_lvl += 1
             self.health_value = self.health_value + 5* self.current_lvl
             self.snake.improve_snake()
@@ -179,7 +174,16 @@ class Game(Ursina):
             calculate_points_distance(self.snake.direction, self.health.position)
         
         # if game is over
-        self.is_game_over()
+        if self.is_game_over() or self.health_value <= 0:
+            print("game over")
+            self.show_finish_game_info()
+            application.pause()
+
+        for key, value in held_keys.items():
+            print(key)
+            if value != 0:
+                if key == 'escape' and application.paused:
+                    exit()
 
         #moving snake
         self.snake.move_snake()
